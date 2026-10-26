@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planificador de Menús & Compra</title>
+  <style>
+    :root {
+      --primary: #2e7d32;
+      --primary-light: #e8f5e9;
+      --accent: #fbc02d;
+      --bg: #f4f6f8;
+      --card-bg: #ffffff;
+      --text: #333333;
+      --text-muted: #666666;
+      --border: #e0e0e0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 10px;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 1.3rem;
+      margin-bottom: 2px;
+    }
+
+    header p {
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+
+    /* PESTAÑAS SUPERIORES (TABS) */
+    .tabs-nav {
+      display: flex;
+      background: #e0e0e0;
+      overflow-x: auto;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px 6px;
+      text-align: center;
+      background: #e0e0e0;
+      border: none;
+      font-size: 0.75rem;
+      font-weight: bold;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: var(--card-bg);
+      color: var(--primary);
+      border-bottom: 3px solid var(--primary);
+    }
+
+    .tab-content {
+      display: none;
+      padding: 20px;
+      flex-direction: column;
+      gap: 15px;
+      flex-grow: 1;
+      overflow-y: auto;
+      max-height: 420px;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--primary);
+      border-bottom: 2px solid var(--primary-light);
+      padding-bottom: 5px;
+    }
+
+    .grid-options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .option-btn {
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      background: white;
+      text-align: center;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .option-btn.selected {
+      border-color: var(--primary);
+      background-color: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .budget-slider {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .budget-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--primary);
+    }
+
+    .days-selector {
+      display: flex;
+      justify-content: space-between;
+      gap: 3px;
+    }
+
+    .day-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: white;
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .day-btn.selected {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tag {
+      padding: 6px 12px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: white;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .tag.selected {
+      background: #ffebee;
+      border-color: #ef5350;
+      color: #c62828;
+    }
+
+    .action-container {
+      padding: 15px 20px;
+      background: #fafafa;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: center;
+    }
+
+    .btn-generate {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: black;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .menu-card {
+      background: #fafafa;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+    }
+
+    .menu-card h4 {
+      color: var(--primary);
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+
+    .menu-card p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .price-tag {
+      font-weight: bold;
+      color: #2e7d32;
+      float: right;
+      font-size: 0.9rem;
+    }
+
+    .shopping-list {
+      background: var(--primary-light);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+
+    .shopping-list h3 {
+      margin-bottom: 6px;
+      color: var(--primary);
+      font-size: 0.95rem;
+    }
+
+    .shopping-list ul {
+      list-style: none;
+      max-height: 130px;
+      overflow-y: auto;
+    }
+
+    .shopping-list li {
+      padding: 4px 0;
+      border-bottom: 1px dashed #c8e6c9;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <header>
+    <h1>Planificador de Menús</h1>
+    <p>Comida, Cena y Control de Presupuesto</p>
+  </header>
+
+  <!-- PESTAÑAS SUPERIORES -->
+  <div class="tabs-nav">
+    <button class="tab-btn active" onclick="switchTab(0)">1. Súper</button>
+    <button class="tab-btn" onclick="switchTab(1)">2. Personas</button>
+    <button class="tab-btn" onclick="switchTab(2)">3. Utensilios</button>
+    <button class="tab-btn" onclick="switchTab(3)">4. Dieta</button>
+    <button class="tab-btn" onclick="switchTab(4)">5. Menú</button>
+  </div>
+
+  <!-- CONTENIDO TAB 1: SUPERMERCADO Y PRESUPUESTO -->
+  <div class="tab-content active" id="tab-0">
+    <div class="section-title">Supermercado</div>
+    <div class="grid-options" id="supermarket-options">
+      <div class="option-btn selected" onclick="selectSuper(this, 'Mercadona')">Mercadona</div>
+      <div class="option-btn" onclick="selectSuper(this, 'Carrefour')">Carrefour</div>
+      <div class="option-btn" onclick="selectSuper(this, 'Alcampo')">Alcampo</div>
+      <div class="option-btn" onclick="selectSuper(this, 'Día')">Día</div>
+      <div class="option-btn" onclick="selectSuper(this, 'Lidl')">Lidl</div>
+      <div class="option-btn" onclick="selectSuper(this, 'Eroski')">Eroski</div>
+    </div>
+
+    <div class="section-title" style="margin-top: 10px;">Presupuesto Máximo Semanal</div>
+    <div class="budget-slider">
+      <div class="budget-value" id="budget-display">50 €</div>
+      <input type="range" id="budget-input" min="20" max="150" value="50" step="5" oninput="updateBudget(this.value)">
+    </div>
+  </div>
+
+  <!-- CONTENIDO TAB 2: COMENSALES Y DÍAS -->
+  <div class="tab-content" id="tab-1">
+    <div class="section-title">Comensales</div>
+    <div class="grid-options">
+      <div class="option-btn selected" onclick="selectDiners(this, 1)">Solo yo</div>
+      <div class="option-btn" onclick="selectDiners(this, 2)">2 personas</div>
+      <div class="option-btn" onclick="selectDiners(this, 3)">3 personas</div>
+      <div class="option-btn" onclick="selectDiners(this, 4)">4 personas</div>
+    </div>
+
+    <div class="section-title" style="margin-top: 10px;">Días a planificar</div>
+    <div class="days-selector">
+      <button class="day-btn selected" onclick="toggleDay(this, 'L')">L</button>
+      <button class="day-btn selected" onclick="toggleDay(this, 'M')">M</button>
+      <button class="day-btn selected" onclick="toggleDay(this, 'X')">X</button>
+      <button class="day-btn selected" onclick="toggleDay(this, 'J')">J</button>
+      <button class="day-btn selected" onclick="toggleDay(this, 'V')">V</button>
+      <button class="day-btn" onclick="toggleDay(this, 'S')">S</button>
+      <button class="day-btn" onclick="toggleDay(this, 'D')">D</button>
+    </div>
+  </div>
+
+  <!-- CONTENIDO TAB 3: UTENSILIOS DE COCINA -->
+  <div class="tab-content" id="tab-2">
+    <div class="section-title">¿Qué utensilios tienes?</div>
+    <div class="tags-container" id="tool-tags">
+      <div class="tag selected" onclick="toggleTool(this, 'Airfryer')">Airfryer (Freidora aire)</div>
+      <div class="tag selected" onclick="toggleTool(this, 'Horno')">Horno</div>
+      <div class="tag selected" onclick="toggleTool(this, 'Microondas')">Microondas</div>
+      <div class="tag selected" onclick="toggleTool(this, 'Vitro/Placa')">Vitro / Placa</div>
+      <div class="tag" onclick="toggleTool(this, 'Robot')">Robot de cocina</div>
+    </div>
+  </div>
+
+  <!-- CONTENIDO TAB 4: ESTILO Y EXCLUSIONES -->
+  <div class="tab-content" id="tab-3">
+    <div class="section-title">Tipo de Menú</div>
+    <div class="grid-options" id="diet-options">
+      <div class="option-btn selected" onclick="selectDiet(this, 'general')">Variado / Normal</div>
+      <div class="option-btn" onclick="selectDiet(this, 'keto')">Keto (Opcional)</div>
+      <div class="option-btn" onclick="selectDiet(this, 'lowcarb')">Low Carb</div>
+      <div class="option-btn" onclick="selectDiet(this, 'mediterraneo')">Mediterráneo</div>
+    </div>
+
+    <div class="section-title" style="margin-top: 10px;">Ingredientes a evitar</div>
+    <div class="tags-container" id="dislike-tags">
+      <div class="tag" onclick="toggleTag(this, 'Champiñones')">Champiñones</div>
+      <div class="tag" onclick="toggleTag(this, 'Aceitunas')">Aceitunas</div>
+      <div class="tag" onclick="toggleTag(this, 'Pescado')">Pescado</div>
+      <div class="tag" onclick="toggleTag(this, 'Marisco')">Marisco</div>
+      <div class="tag" onclick="toggleTag(this, 'Queso')">Queso</div>
+      <div class="tag" onclick="toggleTag(this, 'Huevo')">Huevo</div>
+    </div>
+  </div>
+
+  <!-- CONTENIDO TAB 5: RESULTADO Y LISTA DE COMPRA -->
+  <div class="tab-content" id="tab-4">
+    <div class="section-title">Tu Menú (Comida y Cena)</div>
+    <div id="menu-results" style="max-height: 180px; overflow-y: auto;"></div>
+
+    <div class="shopping-list">
+      <h3>🛒 Lista de la Compra</h3>
+      <ul id="shopping-list-items"></ul>
+      <div style="margin-top: 6px; font-weight: bold; text-align: right; color: var(--primary);" id="total-cost"></div>
+    </div>
+  </div>
+
+  <!-- BOTÓN INFERIOR FIJO PARA GENERAR -->
+  <div class="action-container">
+    <button class="btn-generate" onclick="generateMenu()">⚡ Generar Menú Ajustado</button>
+  </div>
+</div>
+
+<script>
+  const config = {
+    supermarket: 'Mercadona',
+    budget: 50,
+    diners: 1,
+    days: ['L', 'M', 'X', 'J', 'V'],
+    tools: ['Airfryer', 'Horno', 'Microondas', 'Vitro/Placa'],
+    diet: 'general',
+    dislikes: []
+  };
+
+  // Recetas con costes unitarios reales equilibrados
+  const lunchRecipes = [
+    { name: 'Pollo guisado con patatas', type: 'general', cost: 1.80, ingredients: ['Pechuga de pollo', 'Patatas', 'Zanahoria', 'Caldo'], tool: 'Vitro/Placa' },
+    { name: 'Arroz con pollo y verduras', type: 'general', cost: 1.60, ingredients: ['Arroz', 'Pechuga de pollo', 'Pimiento', 'Tomate triturado'], tool: 'Vitro/Placa' },
+    { name: 'Lentejas estofadas tradicionales', type: 'general', cost: 1.20, ingredients: ['Lentejas', 'Chorizo', 'Patata', 'Cebolla'], tool: 'Vitro/Placa' },
+    { name: 'Salmón al horno con ensalada', type: 'mediterraneo', cost: 3.20, ingredients: ['Lomo de salmón', 'Lechuga', 'Tomate', 'Aceite de oliva'], tool: 'Horno' },
+    { name: 'Pasta boloñesa casera', type: 'general', cost: 1.90, ingredients: ['Macarrones', 'Carne picada', 'Tomate frito', 'Queso rallado'], tool: 'Vitro/Placa' }
+  ];
+
+  const dinnerRecipes = [
+    { name: 'Tortilla francesa con espinacas', type: 'general', cost: 0.90, ingredients: ['Huevos', 'Espinacas frescas', 'Aceite'], tool: 'Vitro/Placa' },
+    { name: 'Crema de verduras ligera', type: 'mediterraneo', cost: 1.10, ingredients: ['Calabacín', 'Puerro', 'Patata', 'Quesito'], tool: 'Vitro/Placa' },
+    { name: 'Pechuga en Airfryer con aguacate', type: 'keto', cost: 2.50, ingredients: ['Pechuga de pollo', 'Aguacate', 'Aceite de oliva'], tool: 'Airfryer' },
+    { name: 'Ensalada variada con atún', type: 'mediterraneo', cost: 1.50, ingredients: ['Lechuga', 'Atún en lata', 'Maíz', 'Tomate'], tool: 'Microondas' },
+    { name: 'Huevos revueltos con bacon', type: 'keto', cost: 1.60, ingredients: ['Huevos', 'Bacon en lonchas', 'Mantequilla'], tool: 'Vitro/Placa' }
+  ];
+
+  function switchTab(index) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === index));
+    document.querySelectorAll('.tab-content').forEach((c, i) => c.classList.toggle('active', i === index));
+  }
+
+  function updateBudget(val) {
+    config.budget = parseInt(val);
+    document.getElementById('budget-display').innerText = val + ' €';
+  }
+
+  function selectSuper(el, name) {
+    document.querySelectorAll('#supermarket-options .option-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    config.supermarket = name;
+  }
+
+  function selectDiners(el, num) {
+    document.querySelectorAll('#tab-1 .grid-options .option-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    config.diners = num;
+  }
+
+  function selectDiet(el, dietType) {
+    document.querySelectorAll('#diet-options .option-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    config.diet = dietType;
+  }
+
+  function toggleDay(el, day) {
+    el.classList.toggle('selected');
+    if (config.days.includes(day)) {
+      config.days = config.days.filter(d => d !== day);
+    } else {
+      config.days.push(day);
+    }
+  }
+
+  function toggleTool(el, toolName) {
+    el.classList.toggle('selected');
+    if (config.tools.includes(toolName)) {
+      config.tools = config.tools.filter(t => t !== toolName);
+    } else {
+      config.tools.push(toolName);
+    }
+  }
+
+  function toggleTag(el, item) {
+    el.classList.toggle('selected');
+    if (config.dislikes.includes(item)) {
+      config.dislikes = config.dislikes.filter(i => i !== item);
+    } else {
+      config.dislikes.push(item);
+    }
+  }
+
+  // ALGORITMO CON CONTROL ESTRICTO DE PRESUPUESTO
+  function generateMenu() {
+    if (config.days.length === 0) {
+      alert('Por favor, selecciona al menos un día.');
+      switchTab(1);
+      return;
+    }
+
+    const menuContainer = document.getElementById('menu-results');
+    const shoppingContainer = document.getElementById('shopping-list-items');
+    menuContainer.innerHTML = '';
+    shoppingContainer.innerHTML = '';
+
+    // Filtrar recetas según utensilios, dieta y dislikes
+    const validLunches = lunchRecipes.filter(r => config.tools.includes(r.tool) && !r.ingredients.some(ing => config.dislikes.includes(ing)));
+    const validDinners = dinnerRecipes.filter(r => config.tools.includes(r.tool) && !r.ingredients.some(ing => config.dislikes.includes(ing)));
+
+    const fallbackLunch = { name: 'Arroz blanco con aceite', cost: 0.80, ingredients: ['Arroz', 'Aceite'], tool: 'Vitro/Placa' };
+    const fallbackDinner = { name: 'Tortilla francesa básica', cost: 0.70, ingredients: ['Huevos', 'Aceite'], tool: 'Vitro/Placa' };
+
+    let totalCalculated = 0;
+    let allIngredients = [];
+    let selectedMenu = [];
+
+    config.days.forEach((day, idx) => {
+      let lunch = validLunches.length > 0 ? validLunches[idx % validLunches.length] : fallbackLunch;
+      let dinner = validDinners.length > 0 ? validDinners[idx % validDinners.length] : fallbackDinner;
+
+      let dayCost = (lunch.cost + dinner.cost) * config.diners;
+
+      // Si nos pasamos del presupuesto, cambiamos a opciones económicas automáticamente
+      if ((totalCalculated + dayCost) > config.budget) {
+        lunch = fallbackLunch;
+        dinner = fallbackDinner;
+        dayCost = (lunch.cost + dinner.cost) * config.diners;
+      }
+
+      totalCalculated += dayCost;
+      allIngredients.push(...lunch.ingredients, ...dinner.ingredients);
+      selectedMenu.push({ day, lunch, dinner, dayCost });
+    });
+
+    // Renderizar resultados
+    selectedMenu.forEach(item => {
+      menuContainer.innerHTML += `
+        <div class="menu-card">
+          <span class="price-tag">${item.dayCost.toFixed(2)} €</span>
+          <h4>Día ${item.day}</h4>
+          <p>🍽️ <b>Comida:</b> ${item.lunch.name}</p>
+          <p>🌙 <b>Cena:</b> ${item.dinner.name}</p>
+        </div>
+      `;
+    });
+
+    const uniqueIngredients = [...new Set(allIngredients)];
+    uniqueIngredients.forEach(item => {
+      shoppingContainer.innerHTML += `<li><span>${item}</span> <span>✓</span></li>`;
+    });
+
+    document.getElementById('total-cost').innerText = 'Total: ' + totalCalculated.toFixed(2) + ' € (Presupuesto máx: ' + config.budget + ' €)';
+    
+    // Cambiar automáticamente a la pestaña 5 para ver el resultado
+    switchTab(4);
+  }
+</script>
+
+</body>
+</html>
